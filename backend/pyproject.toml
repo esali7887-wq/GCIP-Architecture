@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "gcip-backend"
+version = "1.0.0"
+description = "Global Construction Intelligence Platform Backend"
+authors = ["GCIP Dev Team <dev@gcip.ai>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.110.0"
+uvicorn = "^0.28.0"
+pydantic = "^2.6.0"
+neo4j = "^5.18.0"
+redis = "^5.0.1"
+langgraph = "^0.0.25"
+langchain-core = "^0.1.30"
+langchain-openai = "^0.0.8"
+networkx = "^3.2.1"          # CPM Gantt graf analizi ve simülasyonları için
+semantic-router = "^0.0.18"   # Milisaniyeler seviyesinde ajan yönlendirmesi için
+numpy = "^1.26.4"             # İstatistiksel risk ve zayiat kalibrasyonları için
+scipy = "^1.12.0"
+ezdxf = "^1.1.4"              # QS-2 Ajanı CAD çizim okuma motoru
+opencv-python = "^4.9.0"      # SAF-7 YOLOv8 ve çizim analizi için
+pdfplumber = "^0.10.4"        # LOG-8 İrsaliye PDF okuma motoru
+pycryptodome = "^3.20.0"      # RFC 3161 kriptografik imzalama için
+httpx = "^0.27.0"             # Dış API (e-irsaliye, banka transfer) çağrıları için
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+black = "^24.2.0"
+mypy = "^1.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
