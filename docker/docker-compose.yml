@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # 1. Grafik Veri Tabanı (Neo4j Enterprise / Community)
+  gcip-neo4j:
+    image: neo4j:5.18.0-community
+    container_name: gcip-neo4j
+    ports:
+      - "7474:7474" # HTTP Konsol Portu
+      - "7687:7687" # Bolt Protokolü Portu
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    environment:
+      - NEO4J_AUTH=neo4j/gcipSecurePassword123
+      - NEO4J_PLUGINS=["apoc"] # Otonom UUID oluşturma için APOC kütüphanesi
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*
+    networks:
+      - gcip-network
+
+  # 2. Hızlı Oturum ve shared_state Belleği (Redis)
+  gcip-redis:
+    image: redis:7.0-alpine
+    container_name: gcip-redis
+    command: redis-server --appendonly yes # Hot Recovery için AOF aktif
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gcip-network
+
+  # 3. Yerel Çıkarım Motoru (Local LLM - Llama-3-8B-Instruct)
+  gcip-local-llm:
+    image: ollama/ollama:latest
+    container_name: gcip-local-llm
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu] # GPU hızlandırması
+    networks:
+      - gcip-network
+
+  # 4. Backend Uygulama Sunucusu (FastAPI)
+  gcip-backend:
+    build:
+      context: ../
+      dockerfile: docker/backend.Dockerfile
+    container_name: gcip-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=bolt://gcip-neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=gcipSecurePassword123
+      - REDIS_HOST=gcip-redis
+      - REDIS_PORT=6379
+      - LOCAL_LLM_API=http://gcip-local-llm:11434
+    depends_on:
+      - gcip-neo4j
+      - gcip-redis
+      - gcip-local-llm
+    networks:
+      - gcip-network
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  redis_data:
+  ollama_models:
+
+networks:
+  gcip-network:
+    driver: bridge
